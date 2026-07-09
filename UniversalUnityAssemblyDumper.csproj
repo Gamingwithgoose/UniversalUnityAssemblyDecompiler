@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
+    <AssemblyName>UniversalUnityAssemblyDumper</AssemblyName>
+    <RootNamespace>UniversalUnityAssemblyDumper</RootNamespace>
+    <Version>1.0.2</Version>
+    <FileVersion>1.0.2.0</FileVersion>
+    <AssemblyVersion>1.0.2.0</AssemblyVersion>
+    <Authors>Gaming With Goose</Authors>
+    <Product>Universal Unity Assembly Dumper</Product>
+    <Description>Green-themed GUI for dumping Unity Assembly-CSharp.dll through ilspycmd.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Update="Assets\AppIcon.png" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
