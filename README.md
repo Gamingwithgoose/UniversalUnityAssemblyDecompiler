@@ -16,6 +16,7 @@
   - Assembly-CSharp_TYPES.txt
 - Dump options use custom toggle controls so they can be clicked on/off.
 - Before each run, the app removes only its known old output folders/files from that dump folder so stale results do not look like a newly selected dump.
+<img width="885" height="630" alt="image" src="https://github.com/user-attachments/assets/c1e44436-d64b-4735-8f86-0d523c3f14a3" />
 
 ## Requirement
 
