@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -514,12 +515,28 @@ public sealed class MainForm : Form
 
             if (runAssets)
             {
-                var script = Path.Combine(AppContext.BaseDirectory, "export_assets.py");
-                if (!File.Exists(script)) throw new FileNotFoundException("Missing export_assets.py beside the dumper. Run build.bat again.", script);
-                var python = Path.Combine(AppContext.BaseDirectory, "asset-tools", "Scripts", "python.exe");
-                if (!File.Exists(python)) throw new FileNotFoundException("Asset tools missing. Run build.bat to install UnityPy.", python);
-                AppendLog("Exporting Unity assets...");
-                await RunProcessAsync(python, new[] { "-u", script, resolved.DataFolder, Path.Combine(outRoot, "Assets") });
+                AppendLog("Preparing embedded Unity asset tools...");
+                var runtime = Path.Combine(Path.GetTempPath(), "UnityDumper-" + Guid.NewGuid().ToString("N"));
+                try
+                {
+                    await Task.Run(() =>
+                    {
+                        Directory.CreateDirectory(runtime);
+                        using var stream = typeof(MainForm).Assembly.GetManifestResourceStream("UnityDumper.AssetRuntime.zip")
+                            ?? throw new InvalidOperationException("Asset runtime missing from this build. Run build.bat.");
+                        using var archive = new System.IO.Compression.ZipArchive(stream, System.IO.Compression.ZipArchiveMode.Read);
+                        archive.ExtractToDirectory(runtime);
+                    });
+                    var python = Path.Combine(runtime, "python.exe");
+                    var script = Path.Combine(runtime, "export_assets.py");
+                    AppendLog("Exporting Unity assets...");
+                    await RunProcessAsync(python, new[] { "-u", script, resolved.DataFolder, Path.Combine(outRoot, "Assets") });
+                }
+                finally
+                {
+                    try { Directory.Delete(runtime, true); }
+                    catch (Exception ex) { AppendLog("Temporary runtime cleanup warning: " + ex.Message); }
+                }
             }
             AppendLog("Done.");
             _statusLabel.ForeColor = Palette.Accent;

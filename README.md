@@ -1,6 +1,6 @@
 # Universal Unity Assembly Dumper
 
-**Version:** 1.0.3
+**Version:** 1.0.4
 
 ## What it does
 
@@ -62,6 +62,8 @@ dotnet tool update --global ilspycmd
 - Selected options visibly show a green border and checkmark.
 - Unchecked options stay unchecked and are skipped during dumping.
 
-## v1.0.3 asset export
+## v1.0.4 portable asset export
 
-Run build.bat on Windows with the .NET SDK and Python 3 (64-bit) installed. The build installs UnityPy into dist/asset-tools. Launch dist/UniversalUnityAssemblyDumper.exe in place; the asset exporter and Python environment must remain beside it. Export Unity assets is independent of the three assembly options and does not require ilspycmd when selected alone. Select the game root, Data or Managed folder as before. Assets are exported to Assets under the dump folder, with PNG sprites/textures, audio, text assets, OBJ meshes and serialized JSON where supported. asset_index.jsonl records source files and path IDs. Unsupported conversions are logged and raw serialized bytes are retained where possible. Stripped MonoBehaviour type trees may require additional tooling; JSON export is not guaranteed. Asset exports are not automatically deleted when running another dump; use a fresh dump folder for each game version. Python remains an external runtime dependency, so the GUI EXE alone is not sufficient for asset exports. No game files are modified.
+Run build.bat on Windows with the .NET 10 SDK and internet access. The build downloads portable Python 3.12 x64 from python.org, installs UnityPy, tests imports, and embeds the runtime and exporter into the EXE. No separately installed Python is needed. Move only dist/UniversalUnityAssemblyDumper.exe wherever desired. On asset export the runtime is unpacked into a unique temporary directory and cleaned up afterward. Assembly decompilation still uses the existing separately installed ilspycmd tool; asset-only export does not require it.
+
+Asset output is under Assets in the dump folder: textures, sprites, audio, text, meshes and serialized JSON where supported, plus asset_index.jsonl. Stripped type trees or unsupported formats may yield raw fallback files. Use a new dump folder for each game version. The game files are not modified.
