@@ -26,6 +26,7 @@ public sealed class MainForm : Form
     private readonly ToggleOption _dumpCs = new();
     private readonly ToggleOption _dumpIl = new();
     private readonly ToggleOption _dumpTypes = new();
+    private readonly ToggleOption _dumpAssets = new();
     private readonly Button _runButton = new();
     private readonly Button _openOutputButton = new();
     private readonly Label _statusLabel = new();
@@ -39,8 +40,8 @@ public sealed class MainForm : Form
     {
         Text = "Universal Unity Assembly Dumper";
         Width = 900;
-        Height = 640;
-        MinimumSize = new Size(820, 560);
+        Height = 700;
+        MinimumSize = new Size(820, 620);
         StartPosition = FormStartPosition.CenterScreen;
         BackColor = Palette.Window;
         ForeColor = Palette.Text;
@@ -149,7 +150,7 @@ public sealed class MainForm : Form
             Left = 18,
             Top = 358,
             Width = ClientSize.Width - 36,
-            Height = 78,
+            Height = 112,
             Anchor = AnchorStyles.Left | AnchorStyles.Top | AnchorStyles.Right,
             BackColor = Palette.Panel
         };
@@ -170,12 +171,17 @@ public sealed class MainForm : Form
         _dumpTypes.Checked = true;
         StyleCheckBox(_dumpTypes);
 
-        _runButton.SetBounds(optionsPanel.Width - 246, 25, 110, 34);
+        _dumpAssets.SetBounds(18, 74, 220, 30);
+        _dumpAssets.Text = "Export Unity assets";
+        _dumpAssets.Checked = false;
+        StyleCheckBox(_dumpAssets);
+
+        _runButton.SetBounds(optionsPanel.Width - 246, 74, 110, 30);
         _runButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
         _runButton.Text = "Start Dump";
         StyleButton(_runButton, true);
 
-        _openOutputButton.SetBounds(optionsPanel.Width - 126, 25, 110, 34);
+        _openOutputButton.SetBounds(optionsPanel.Width - 126, 74, 110, 30);
         _openOutputButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
         _openOutputButton.Text = "Open Folder";
         _openOutputButton.Enabled = false;
@@ -183,13 +189,13 @@ public sealed class MainForm : Form
 
         optionsPanel.Controls.AddRange(new Control[]
         {
-            optionsLabel, _dumpCs, _dumpIl, _dumpTypes, _runButton, _openOutputButton
+            optionsLabel, _dumpCs, _dumpIl, _dumpTypes, _dumpAssets, _runButton, _openOutputButton
         });
 
-        var logLabel = MakeLabel("Log", 18, 452, 120, 22, Palette.Text);
+        var logLabel = MakeLabel("Log", 18, 486, 120, 22, Palette.Text);
         logLabel.Anchor = AnchorStyles.Left | AnchorStyles.Top;
 
-        _logText.SetBounds(18, 478, ClientSize.Width - 36, ClientSize.Height - 496);
+        _logText.SetBounds(18, 512, ClientSize.Width - 36, ClientSize.Height - 530);
         _logText.Anchor = AnchorStyles.Left | AnchorStyles.Top | AnchorStyles.Right | AnchorStyles.Bottom;
         _logText.Multiline = true;
         _logText.ReadOnly = true;
@@ -387,18 +393,20 @@ public sealed class MainForm : Form
         var runCs = _dumpCs.Checked;
         var runIl = _dumpIl.Checked;
         var runTypes = _dumpTypes.Checked;
+        var runAssets = _dumpAssets.Checked;
 
         _runButton.Enabled = false;
         _browseButton.Enabled = false;
         _dumpCs.Enabled = false;
         _dumpIl.Enabled = false;
         _dumpTypes.Enabled = false;
+        _dumpAssets.Enabled = false;
         _openOutputButton.Enabled = false;
         _logText.Clear();
 
         try
         {
-            if (!runCs && !runIl && !runTypes)
+            if (!runCs && !runIl && !runTypes && !runAssets)
             {
                 MessageBox.Show(this, "Select at least one dump option.", "Nothing selected", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
@@ -428,8 +436,8 @@ public sealed class MainForm : Form
                 return;
             }
 
-            var ilspy = LocateIlspyCmd();
-            if (ilspy == null)
+            var ilspy = runCs || runIl || runTypes ? LocateIlspyCmd() : null;
+            if ((runCs || runIl || runTypes) && ilspy == null)
             {
                 MessageBox.Show(this,
                     "ilspycmd was not found. Install it first, then reopen this app.\n\nCommand:\n    dotnet tool install --global ilspycmd\n\nUpdate command:\n    dotnet tool update --global ilspycmd",
@@ -450,6 +458,7 @@ public sealed class MainForm : Form
             AppendLog("  C# project: " + YesNo(runCs));
             AppendLog("  IL dump: " + YesNo(runIl));
             AppendLog("  Type list: " + YesNo(runTypes));
+            AppendLog("  Export assets: " + YesNo(runAssets));
             AppendLog("");
 
             Directory.CreateDirectory(outRoot);
@@ -466,7 +475,7 @@ public sealed class MainForm : Form
                 var csOut = Path.Combine(outRoot, KnownCsFolderName);
                 Directory.CreateDirectory(csOut);
                 AppendLog("Decompiling full C# project...");
-                await RunProcessAsync(ilspy, new[] { "-p", "--nested-directories", "-r", resolved.ManagedFolder, "-o", csOut, resolved.AssemblyPath });
+                await RunProcessAsync(ilspy!, new[] { "-p", "--nested-directories", "-r", resolved.ManagedFolder, "-o", csOut, resolved.AssemblyPath });
                 AppendLog("C# project dump complete.");
                 AppendLog("");
             }
@@ -480,7 +489,7 @@ public sealed class MainForm : Form
                 var ilOut = Path.Combine(outRoot, KnownIlFolderName);
                 Directory.CreateDirectory(ilOut);
                 AppendLog("Dumping full IL...");
-                await RunProcessAsync(ilspy, new[] { "-il", "-o", ilOut, resolved.AssemblyPath });
+                await RunProcessAsync(ilspy!, new[] { "-il", "-o", ilOut, resolved.AssemblyPath });
                 AppendLog("IL dump complete.");
                 AppendLog("");
             }
@@ -493,7 +502,7 @@ public sealed class MainForm : Form
             {
                 var typesOut = Path.Combine(outRoot, KnownTypesFileName);
                 AppendLog("Listing all types...");
-                var output = await RunProcessCaptureStdoutAsync(ilspy, new[] { "-l", "cisd", resolved.AssemblyPath });
+                var output = await RunProcessCaptureStdoutAsync(ilspy!, new[] { "-l", "cisd", resolved.AssemblyPath });
                 await File.WriteAllTextAsync(typesOut, output, Encoding.UTF8);
                 AppendLog("Types list complete: " + typesOut);
                 AppendLog("");
@@ -503,6 +512,15 @@ public sealed class MainForm : Form
                 AppendLog("Skipped type list.");
             }
 
+            if (runAssets)
+            {
+                var script = Path.Combine(AppContext.BaseDirectory, "export_assets.py");
+                if (!File.Exists(script)) throw new FileNotFoundException("Missing export_assets.py beside the dumper. Run build.bat again.", script);
+                var python = Path.Combine(AppContext.BaseDirectory, "asset-tools", "Scripts", "python.exe");
+                if (!File.Exists(python)) throw new FileNotFoundException("Asset tools missing. Run build.bat to install UnityPy.", python);
+                AppendLog("Exporting Unity assets...");
+                await RunProcessAsync(python, new[] { "-u", script, resolved.DataFolder, Path.Combine(outRoot, "Assets") });
+            }
             AppendLog("Done.");
             _statusLabel.ForeColor = Palette.Accent;
             _statusLabel.Text = "Done. Output created at " + outRoot;
@@ -523,6 +541,7 @@ public sealed class MainForm : Form
             _dumpCs.Enabled = true;
             _dumpIl.Enabled = true;
             _dumpTypes.Enabled = true;
+            _dumpAssets.Enabled = true;
         }
     }
 

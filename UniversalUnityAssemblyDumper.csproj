@@ -9,9 +9,9 @@
     <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
     <AssemblyName>UniversalUnityAssemblyDumper</AssemblyName>
     <RootNamespace>UniversalUnityAssemblyDumper</RootNamespace>
-    <Version>1.0.2</Version>
-    <FileVersion>1.0.2.0</FileVersion>
-    <AssemblyVersion>1.0.2.0</AssemblyVersion>
+    <Version>1.0.3</Version>
+    <FileVersion>1.0.3.0</FileVersion>
+    <AssemblyVersion>1.0.3.0</AssemblyVersion>
     <Authors>Gaming With Goose</Authors>
     <Product>Universal Unity Assembly Dumper</Product>
     <Description>Green-themed GUI for dumping Unity Assembly-CSharp.dll through ilspycmd.</Description>
