@@ -25,7 +25,14 @@ Invoke-WebRequest -UseBasicParsing -Uri "https://bootstrap.pypa.io/get-pip.py" -
 $python = Join-Path $stage "python.exe"
 & $python $bootstrap --no-warn-script-location
 if ($LASTEXITCODE -ne 0) { throw "Portable Python pip installation failed." }
-& $python -m pip install --disable-pip-version-check --no-warn-script-location "UnityPy>=1.20,<2"
+Write-Host "Installing portable Python build dependencies..." -ForegroundColor Cyan
+& $python -m pip install --disable-pip-version-check --no-warn-script-location "setuptools>=70" wheel
+if ($LASTEXITCODE -ne 0) { throw "Python build dependencies installation failed." }
+& $python -c "import setuptools.build_meta; import wheel; print('Python build backend import test passed')"
+if ($LASTEXITCODE -ne 0) { throw "Python build backend import test failed." }
+# Embedded Python uses an isolated _pth file, so pip's temporary build environment
+# cannot reliably inject its setuptools path. Use the verified local backend.
+& $python -m pip install --disable-pip-version-check --no-warn-script-location --no-build-isolation "UnityPy>=1.20,<2"
 if ($LASTEXITCODE -ne 0) { throw "UnityPy installation failed." }
 Copy-Item -Force (Join-Path $PSScriptRoot "export_assets.py") $stage
 & $python -c "import UnityPy; from PIL import Image; import export_assets; print('Embedded asset runtime import test passed')"

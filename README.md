@@ -1,6 +1,6 @@
 # Universal Unity Assembly Dumper
 
-**Version:** 1.0.4
+**Version:** 1.0.5
 
 ## What it does
 
@@ -67,3 +67,7 @@ dotnet tool update --global ilspycmd
 Run build.bat on Windows with the .NET 10 SDK and internet access. The build downloads portable Python 3.12 x64 from python.org, installs UnityPy, tests imports, and embeds the runtime and exporter into the EXE. No separately installed Python is needed. Move only dist/UniversalUnityAssemblyDumper.exe wherever desired. On asset export the runtime is unpacked into a unique temporary directory and cleaned up afterward. Assembly decompilation still uses the existing separately installed ilspycmd tool; asset-only export does not require it.
 
 Asset output is under Assets in the dump folder: textures, sprites, audio, text, meshes and serialized JSON where supported, plus asset_index.jsonl. Stripped type trees or unsupported formats may yield raw fallback files. Use a new dump folder for each game version. The game files are not modified.
+
+## v1.0.5 build fix
+
+Install setuptools and wheel in the portable Python runtime, verify the build backend imports, then install UnityPy without pip build isolation to support source-only dependencies such as tpk_ar. The single-EXE packaging is unchanged.
